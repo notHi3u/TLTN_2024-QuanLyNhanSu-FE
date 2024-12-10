@@ -19,3 +19,40 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* styles.css */
+/* Ẩn thanh cuộn cho các trình duyệt WebKit (Chrome, Safari) */
+.drawer-side {
+  scrollbar-width: none;
+  /* Ẩn thanh cuộn cho Firefox */
+  -ms-overflow-style: none;
+  /* Ẩn thanh cuộn cho Internet Explorer và Edge */
+}
+
+.drawer-side::-webkit-scrollbar {
+  display: none;
+  /* Ẩn thanh cuộn cho Chrome, Safari */
+}
+
+/* Class cho thanh cuộn */
+.custom-scroll {
+  scrollbar-width: thin; /* Đặt thanh cuộn mỏng cho Firefox */
+  -ms-overflow-style: -ms-autohide; /* Ẩn thanh cuộn cho Internet Explorer và Edge */
+}
+
+/* width */
+.custom-scroll::-webkit-scrollbar {
+  width: 8px; /* Đặt độ rộng của thanh cuộn dọc */
+  height: 8px; /* Đặt độ rộng của thanh cuộn ngang */
+}
+
+/* Màu sắc cho thanh cuộn */
+.custom-scroll::-webkit-scrollbar-thumb {
+  background-color: #888; /* Màu sắc cho phần thanh cuộn */
+  border-radius: 4px; /* Làm tròn các góc */
+}
+
+/* Màu sắc cho phần thanh cuộn khi hover */
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* Màu sắc cho phần thanh cuộn khi hover */
+}
