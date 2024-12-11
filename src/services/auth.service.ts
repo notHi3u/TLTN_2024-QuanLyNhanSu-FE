@@ -34,30 +34,35 @@ export class AuthService {
         // Get the refresh token from cookies
         const refreshToken = Cookies.get('refreshToken');
         if (!refreshToken) {
-            throw new Error("No refresh token available");
+          throw new Error("No refresh token available");
         }
-    
-        // Get the access token from cookies
-        const accessToken = Cookies.get('accessToken');
     
         try {
-            const response = await axios.post(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}api/auth/refresh`,
-                { refreshToken },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken || ''}`, // Fallback to an empty string if accessToken is not available
-                    },
-                    withCredentials: true,
-                }
-            );
-            return response.data;
+          // Make the API request to refresh the token
+          const response = await axios.post(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/refresh`, // Ensure the endpoint matches Swagger
+            { refreshToken }, // Payload with refreshToken
+            {
+              headers: {
+                'Content-Type': 'application/json', // Set JSON content type
+              },
+              //withCredentials: true, // Send cookies with request
+            }
+          );
+    
+        //   // Optionally save the new tokens if they are returned
+        //   if (response.data && response.data.accessToken && response.data.refreshToken) {
+        //     const { accessToken, refreshToken: newRefreshToken } = response.data;
+        //     Cookies.set('accessToken', accessToken, { expires: 55 / 1440, sameSite: 'strict' }); // Example: 55 minutes
+        //     Cookies.set('refreshToken', newRefreshToken, { expires: 7, sameSite: 'strict' });    // Example: 7 days
+        //   }
+    
+          return response.data;
         } catch (error) {
-            console.error('Refresh token error:', error);
-            throw error;
+          console.error('Refresh token error:', error);
+          throw new Error("Failed to refresh token");
         }
-    }
+      }
 
     static async logout(): Promise<void> {
         try {

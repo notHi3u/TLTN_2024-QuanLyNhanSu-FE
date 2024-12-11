@@ -36,17 +36,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   //const [hasAccess, setHasAccess] = useState(false); // new state for access control
   const router = useRouter();
 
-  const checkAuth = useCallback(() => {
-    const authStatus = auth.isAuthenticated();
-    setIsAuthenticated(authStatus);
-    //setIsLoading(false);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
   const logout = useCallback(async () => {
     setLoading(true);
     try {
@@ -59,6 +48,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
   }, [router]);
+
+  const refresh = useCallback(
+    async () => {
+      setLoading(true);
+      try {
+        const response = await AuthService.refresh();
+        if (response && response.data.accessToken) {
+          auth.saveToken(response.data.accessToken, response.data.refreshToken);
+        }
+      } catch (error) {
+        console.error("Refresh error:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  const checkAuth = useCallback(async () => {
+    const authStatus = auth.isAuthenticated();
+  
+    // If not authenticated, try to refresh
+    if (!authStatus) {
+      try {
+        await refresh(); // Attempt to refresh the access token
+        const refreshedAuthStatus = auth.isAuthenticated();
+        setIsAuthenticated(refreshedAuthStatus);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
+        console.error("Refresh failed, logging out.");
+        await logout(); // If refresh fails, log out the user
+      }
+    } else {
+      setIsAuthenticated(authStatus); // User is authenticated, proceed
+    }
+  
+    setLoading(false);
+  }, [logout, refresh]);
+  
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  
 
   useEffect(() => {
     console.log(isAuthenticated); // Log the current value of isAuthenticated
@@ -105,22 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [logout]
   );
 
-  const refresh = useCallback(
-    async () => {
-      setLoading(true);
-      try {
-        const response = await AuthService.refresh();
-        if (response && response.data.accessToken) {
-          auth.saveToken(response.data.accessToken, response.data.refreshToken);
-        }
-      } catch (error) {
-        console.error("Refresh error:", error);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+  
 
   return (
     <AuthContext.Provider
