@@ -34,7 +34,7 @@ export function ThemeSwitcher() {
                 className="bg-primary-500 border-primary-300"
                 onClick={toggleTheme}
             >
-                {theme === 'wata-light' ? (
+                {theme === 'light' ? (
                     <CiLight className="w-[60%] h-auto" />
                 ) : (
                     <MdDarkMode className="w-[60%] h-auto" />

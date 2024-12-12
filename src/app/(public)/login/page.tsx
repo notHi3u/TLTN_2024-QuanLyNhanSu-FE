@@ -27,14 +27,14 @@ function Login(): JSX.Element {
     // rememberMe: false,
   });
 
-  const { login, loading } = useAuth();
+  const { login, isLoading } = useAuth();
 
   const handleInputChange = (valueType: string, value: string | boolean) => {
     setFormData({ ...formData, [valueType]: value });
   };
 
   const submitForm = async (values: LoginType) => {
-    if (loading) return;
+    if (isLoading) return;
     try {
       const success = await login(values);
       if (success !== null) {

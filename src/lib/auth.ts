@@ -36,6 +36,9 @@ const auth = {
   isAuthenticated: (): boolean => {
     return !!Cookies.get("accessToken");
   },
+  hasRefreshToken: (): boolean => {
+    return !!Cookies.get("refreshToken");
+  }
 };
 
 export default auth;

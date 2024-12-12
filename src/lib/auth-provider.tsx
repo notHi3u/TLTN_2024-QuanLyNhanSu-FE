@@ -19,8 +19,8 @@ import { TokenResponseDto } from "@/helper/type";
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  //isLoading: boolean;
-  loading: boolean;
+  isLoading: boolean;
+  //loading: boolean;
   //hasAccess: boolean;
   login: (loginType: LoginType) => Promise<TokenResponseDto | null>;
   logout: () => Promise<void>;
@@ -31,13 +31,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  //const [isLoading, setIsLoading] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  //const [loading, setLoading] = useState(false);
   //const [hasAccess, setHasAccess] = useState(false); // new state for access control
   const router = useRouter();
 
   const logout = useCallback(async () => {
-    setLoading(true);
+    console.log("logging out");
+    setIsLoading(true);
     try {
       await auth.logout();
       setIsAuthenticated(false);
@@ -45,13 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [router]);
 
   const refresh = useCallback(
     async () => {
-      setLoading(true);
+      //setLoading(true);
+      setIsLoading(true);
       try {
         const response = await AuthService.refresh();
         if (response && response.data.accessToken) {
@@ -60,47 +62,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error("Refresh error:", error);
       } finally {
-        setLoading(false);
+        //setLoading(false);
+        setIsLoading(false);
       }
     },
     []
   );
 
   const checkAuth = useCallback(async () => {
-    const authStatus = auth.isAuthenticated();
+    setIsLoading(true);
+    try {
+      // Load token from storage on initialization
+      const storedAccessToken = auth.isAuthenticated();
+      const refreshable = auth.hasRefreshToken();
   
-    // If not authenticated, try to refresh
-    if (!authStatus) {
-      try {
-        await refresh(); // Attempt to refresh the access token
-        const refreshedAuthStatus = auth.isAuthenticated();
-        setIsAuthenticated(refreshedAuthStatus);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
-        console.error("Refresh failed, logging out.");
-        await logout(); // If refresh fails, log out the user
+      if (storedAccessToken) {
+        setIsAuthenticated(true);
+      } else if (refreshable) {
+        await refresh();
+        setIsAuthenticated(auth.isAuthenticated());
       }
-    } else {
-      setIsAuthenticated(authStatus); // User is authenticated, proceed
+    } catch {
+      await logout();
+    } finally {
+      setIsLoading(false);
     }
-  
-    setLoading(false);
   }, [logout, refresh]);
   
+
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  
+
 
   useEffect(() => {
-    console.log(isAuthenticated); // Log the current value of isAuthenticated
+    console.log(auth.isAuthenticated());
+    console.log(auth.hasRefreshToken()); // Log the current value of isAuthenticated
   }, [isAuthenticated]); // This will log whenever isAuthenticated changes
 
   const login = useCallback(
     async (loginType: LoginType): Promise<TokenResponseDto | null> => {
-      setLoading(true); // Đặt loading thành true ngay khi bắt đầu login
+      // setLoading(true); // Đặt loading thành true ngay khi bắt đầu login
       try {
         // First, log the user in and get the token
         const response = await AuthService.login(loginType);
@@ -124,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           showToast.error("Invalid credentials. Please check your username/password !!!");
           throw new Error("Invalid credentials"); // Handle incorrect login
         }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error("Login error:", error);
         if (error.message === "Unauthorized") {
@@ -133,17 +137,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return null;
       } finally {
-        setLoading(false); // Đặt loading thành false trong finally
+        //setLoading(false); // Đặt loading thành false trong finally
+        setIsLoading(false);
       }
     },
     [logout]
   );
 
-  
+
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, loading, login, logout, refresh }}
+      value={{ isAuthenticated, isLoading, login, logout, refresh }}
     >
       {children}
     </AuthContext.Provider>
