@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { NextUIProvider } from "@nextui-org/react";
 import React from "react";
-import { ThemeProvider } from "@/lib/theme-provider";
 import StoreProvider from "@/lib/store-provider";
 import { LoadingProvider } from "@/lib/loading-provider";
 import { Inter } from "next/font/google";
@@ -41,12 +39,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased ${inter.className}`}
       >
         {/* <React.StrictMode> */}
-          <NextUIProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="light"
-              themes={["light", "dark"]}
-            >
               <LoadingProvider>
                 <AuthProvider>
                   <StoreProvider>
@@ -55,8 +47,6 @@ export default function RootLayout({
                   </StoreProvider>
                 </AuthProvider>
               </LoadingProvider>
-            </ThemeProvider>
-          </NextUIProvider>
         {/* </React.StrictMode> */}
       </body>
     </html>

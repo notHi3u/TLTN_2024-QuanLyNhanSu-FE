@@ -1,4 +1,3 @@
-// components/AuthProvider.tsx
 "use client";
 
 import React, {
@@ -9,19 +8,20 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import Cookies from "js-cookie";
 import auth from "@/lib/auth";
-import { useRouter } from "next/navigation";
+
 import { AuthService } from "@/services/auth.service";
 import { LoginType } from "@/@types";
 import { showToast } from "@/components/toast/Toast";
 import { TokenResponseDto } from "@/helper/type";
-
+import { useRouter } from "next/navigation";
+import axios from "axios";  // Import axios for role fetching
+import menu from "@/lib/menu";
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
-  //loading: boolean;
-  //hasAccess: boolean;
   login: (loginType: LoginType) => Promise<TokenResponseDto | null>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -32,8 +32,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  //const [loading, setLoading] = useState(false);
-  //const [hasAccess, setHasAccess] = useState(false); // new state for access control
   const router = useRouter();
 
   const logout = useCallback(async () => {
@@ -42,7 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await auth.logout();
       setIsAuthenticated(false);
+      menu.removeMenuOptions();  // Clear role on logout
       router.replace("/login");
+      Cookies.remove("roles");
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -52,7 +52,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(
     async () => {
-      //setLoading(true);
       setIsLoading(true);
       try {
         const response = await AuthService.refresh();
@@ -62,49 +61,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error("Refresh error:", error);
       } finally {
-        //setLoading(false);
         setIsLoading(false);
       }
     },
     []
   );
 
+  const fetchRole = useCallback(async () => {
+    setIsLoading(true); // Set loading to true while fetching roles
+    try {
+      const userId = auth.getUserId();
+      const response = await axios.get<{
+        isSuccess: boolean;
+        data: string[]; // Assuming roles are an array of strings
+        errors?: string[];
+      }>(`${process.env.NEXT_PUBLIC_API_BASE_URL}roles/user/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${Cookies.get("accessToken")}`, // Use the access token for the request
+        },
+      });
+  
+      console.log(response);
+  
+      if (response && response.data) {
+        const roles = response.data.data; // Extract only the roles array
+        console.log(roles);
+  
+        // Join the roles array into a single string, separated by commas
+        const rolesString = roles.join(","); // Joins the array items into a string like "Admin,User,Manager"
+  
+        // Store the joined string in the cookie
+        Cookies.set("roles", rolesString);
+  
+        // Update menu options based on roles
+        menu.setMenuOptions();
+      } else {
+        throw new Error("Invalid roles response");
+      }
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      throw error; // Rethrow error so it can be handled by the calling function
+    } finally {
+      setIsLoading(false); // Set loading to false after fetching
+    }
+  }, []);
+  
+
   const checkAuth = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Load token from storage on initialization
       const storedAccessToken = auth.isAuthenticated();
       const refreshable = auth.hasRefreshToken();
   
       if (storedAccessToken) {
         setIsAuthenticated(true);
+        await fetchRole();  // Fetch the role after authentication
       } else if (refreshable) {
         await refresh();
         setIsAuthenticated(auth.isAuthenticated());
+        await fetchRole();  // Fetch the role after refreshing token
       }
     } catch {
       await logout();
     } finally {
       setIsLoading(false);
     }
-  }, [logout, refresh]);
-  
-
+  }, [fetchRole, logout, refresh]);
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-
-
-  useEffect(() => {
-    console.log(auth.isAuthenticated());
-    console.log(auth.hasRefreshToken()); // Log the current value of isAuthenticated
-  }, [isAuthenticated]); // This will log whenever isAuthenticated changes
-
   const login = useCallback(
     async (loginType: LoginType): Promise<TokenResponseDto | null> => {
-      // setLoading(true); // Đặt loading thành true ngay khi bắt đầu login
       try {
         // First, log the user in and get the token
         const response = await AuthService.login(loginType);
@@ -121,14 +150,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             expiresIn: response.data.expiresIn,
           };
           auth.saveToken(accessToken, refreshToken);
+          auth.saveUser(accessToken);
 
           setIsAuthenticated(true);
+
+          // Fetch the role after login
+          await fetchRole();
+
           return tokenResponse; // Return the TokenResponseDto
         } else {
-          showToast.error("Invalid credentials. Please check your username/password !!!");
+          showToast.error("Invalid credentials. Please check your username/password!");
           throw new Error("Invalid credentials"); // Handle incorrect login
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error("Login error:", error);
         if (error.message === "Unauthorized") {
@@ -137,19 +171,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return null;
       } finally {
-        //setLoading(false); // Đặt loading thành false trong finally
         setIsLoading(false);
       }
     },
-    [logout]
+    [fetchRole, logout]
   );
 
-
-
   return (
-    <AuthContext.Provider
-      value={{ isAuthenticated, isLoading, login, logout, refresh }}
-    >
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );
