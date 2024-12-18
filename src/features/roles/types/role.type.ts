@@ -1,8 +1,8 @@
-import { PermissionDto } from "@/features/premission/types/permission.type";
+import { Permission } from "@/features/permission/types/permission.type";
 
-export interface RoleDto {
-      id: number;
-      name: string;
-      description: string;
-      Permissions: PermissionDto[];
-    }
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  permissions: Permission[];
+}
