@@ -1,21 +1,39 @@
 {
-  "name": "fe",
+  "name": "hr-management-fe",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:https": "node server.js",
     "build": "next build",
     "start": "next start",
+    "start:https": "node server-prod.js",
     "lint": "next lint"
   },
   "dependencies": {
-    "@nextui-org/button": "^2.0.38",
-    "@nextui-org/system": "^2.2.6",
-    "@nextui-org/theme": "^2.2.11",
-    "framer-motion": "^11.12.0",
-    "next": "15.0.3",
+    "@nextui-org/react": "^2.4.8",
+    "@reduxjs/toolkit": "^2.3.0",
+    "@tailwindcss/typography": "^0.5.15",
+    "@types/js-cookie": "^3.0.6",
+    "autoprefixer": "^10.4.20",
+    "axios": "^1.7.7",
+    "chart.js": "^4.4.6",
+    "framer-motion": "^11.11.17",
+    "hr-management-fe": "file:",
+    "https": "^1.0.0",
+    "js-cookie": "^3.0.5",
+    "jwt-decode": "^4.0.0",
+    "next": "^15.1.0",
+    "next-themes": "^0.4.3",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.3.0",
+    "react-redux": "^9.1.2",
+    "react-toastify": "^10.0.6",
+    "redux": "^5.0.1",
+    "sharp": "^0.33.5",
+    "yarn": "^1.22.22"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -26,5 +44,18 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
-  }
+  },
+  "keywords": [
+    "reactjs",
+    "nextjs14",
+    "nextjs-approuter",
+    "typescript",
+    "tailwind-css",
+    "starter-kit",
+    "saas-starter-kit",
+    "reduxt-toolkit-dashboard-template",
+    "dashboard-template",
+    "react-charts"
+  ],
+  "author": "notHi3u"
 }
